@@ -1,0 +1,16 @@
+# Build Geth in a stock Go builder container
+FROM golang:1.11-alpine as builder
+
+RUN apk add --no-cache make gcc musl-dev linux-headers
+
+ADD . /go-blockchain
+RUN cd /go-blockchain && make occ
+
+# Pull Geth into a second stage deploy alpine container
+FROM alpine:latest
+
+RUN apk add --no-cache ca-certificates
+COPY --from=builder /go-blockchain/build/bin/occ /usr/local/bin/
+
+EXPOSE 8545 8546 40404 40404/udp
+ENTRYPOINT ["occ"]
